@@ -19,14 +19,19 @@ export default {
       headers.set("etag", object.httpEtag);
       headers.set("content-type", "application/pdf");
       headers.set("accept-ranges", "bytes");
-      if (object.range) {
-        // R2 served a byte range: answer 206 Partial Content so PDF
-        // viewers can seek instead of downloading the whole file
-        // (and aborting it, which the Worker logged as an exception).
-        const start = object.range.offset;
-        const end = start + object.range.length - 1;
+      if (range) {
+        // The request asked for a byte range: answer 206 Partial
+        // Content. (Decide on the request's Range header, not on
+        // object.range — R2 reports the full range there even for a
+        // whole-file get, which used to turn every response into a 206.)
+        const served = object.range || {
+          offset: range.offset,
+          length: range.length === undefined ? object.size - range.offset : range.length,
+        };
+        const start = served.offset;
+        const end = start + served.length - 1;
         headers.set("content-range", `bytes ${start}-${end}/${object.size}`);
-        headers.set("content-length", String(object.range.length));
+        headers.set("content-length", String(served.length));
         return new Response(object.body, { status: 206, headers });
       }
       return new Response(object.body, { headers });
