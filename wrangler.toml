@@ -1,4 +1,9 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "almoturg"
 compatibility_date = "2024-09-25"
+main = "src/index.js"
 assets = { directory = "./content" }
+
+[[r2_buckets]]
+binding = "SPROG_PDFS"
+bucket_name = "almoturg-sprog"
